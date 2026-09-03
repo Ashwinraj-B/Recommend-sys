@@ -832,9 +832,7 @@ async function competitionApi(
     }
 }
 
-const server =
-    http.createServer(
-        async (req, res) => {
+const handler = async (req, res) => {
             try {
                 const url =
                     new URL(
@@ -944,9 +942,12 @@ const server =
                     );
                 }
             }
-        }
-    );
+        };
 
+module.exports = handler;
+
+if (require.main === module) {
+const server = http.createServer(handler);
 server.listen(
     PORT,
     "127.0.0.1",
@@ -993,3 +994,4 @@ server.listen(
         console.log("");
     }
 );
+}

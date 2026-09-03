@@ -5,6 +5,7 @@
   "description": "Integrated business recommendation engine with OpenStreetMap location and competition data",
   "scripts": {
     "start": "node competition-finder/server.js",
-    "cli": "node chandru-business-recommendation-engine/cli.js"
+    "cli": "node chandru-business-recommendation-engine/cli.js",
+    "dev": "node competition-finder/server.js"
   }
 }

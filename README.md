@@ -102,3 +102,10 @@ npm start
 
 You can also use `.env.example` as a template for your own local environment.
 Never commit a real `.env` file or API key.
+
+
+## Vercel deployment
+
+This project is Vercel-ready. The public pages are `index.html` and `results.html` at the repository root. The backend routes are deployed as Vercel serverless functions under `/api/`.
+
+Set `GEMINI_API_KEY` in Vercel Project Settings -> Environment Variables if Gemini features are required. Do not commit `.env` or real API keys.

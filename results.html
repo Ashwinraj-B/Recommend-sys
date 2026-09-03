@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Business Recommendations</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f6f8;
+            color: #222;
+        }
+
+        header {
+            background: #111827;
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 32px;
+        }
+
+        header p {
+            margin: 8px 0 0;
+            color: #cbd5e1;
+        }
+
+        .container {
+            width: 92%;
+            max-width: 1200px;
+            margin: 30px auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 14px;
+            padding: 24px;
+            margin-bottom: 25px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: #111827;
+        }
+
+        .profile-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 15px;
+        }
+
+        .profile-item {
+            background: #f8fafc;
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 15px;
+        }
+
+        .profile-item strong {
+            display: block;
+            margin-bottom: 7px;
+            color: #475569;
+            font-size: 14px;
+        }
+
+        .profile-item span {
+            font-size: 17px;
+            font-weight: bold;
+            color: #111827;
+            word-break: break-word;
+        }
+
+        #mapDiv {
+            width: 100%;
+            height: 450px;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #e5e7eb;
+        }
+
+        .map-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin-top: 14px;
+            font-size: 13px;
+            color: #475569;
+        }
+
+        .map-legend span {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .map-legend .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .map-legend .dot.osm {
+            background: #2563eb;
+        }
+
+        .map-legend .dot.ai {
+            background: #f97316;
+        }
+
+        .ai-insight {
+            background: #f5f3ff;
+            border: 1px solid #ddd6fe;
+            border-radius: 12px;
+            padding: 20px;
+            line-height: 1.6;
+            color: #312e81;
+        }
+
+        .recommendation {
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 15px;
+            background: #fafafa;
+        }
+
+        .recommendation h3 {
+            margin: 0 0 10px;
+            color: #111827;
+        }
+
+        .score {
+            display: inline-block;
+            background: #111827;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .recommendation p {
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+
+        .threat {
+            padding: 12px 15px;
+            margin: 8px 0;
+            background: #fff7ed;
+            border-left: 5px solid #f97316;
+            border-radius: 6px;
+        }
+
+        .final-recommendation {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .final-recommendation h3 {
+            margin-top: 0;
+            color: #065f46;
+        }
+
+        .message {
+            padding: 20px;
+            text-align: center;
+            background: #f8fafc;
+            border-radius: 10px;
+            color: #475569;
+        }
+
+        .error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        button {
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: bold;
+        }
+
+        .back-button {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        .print-button {
+            background: #111827;
+            color: white;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        @media print {
+            .buttons {
+                display: none;
+            }
+
+            body {
+                background: white;
+            }
+
+            .card {
+                box-shadow: none;
+                border: 1px solid #ddd;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1>Business Recommendations</h1>
+        <p>Business Recommendation Engine</p>
+    </header>
+
+    <div class="container">
+
+        <!-- Profile -->
+        <section class="card">
+            <h2>Your Business Profile</h2>
+
+            <div id="profileSection" class="profile-grid">
+                <div class="message">
+                    Loading profile...
+                </div>
+            </div>
+        </section>
+
+        <!-- Competition Map -->
+        <section class="card">
+            <h2>Nearby Competition</h2>
+
+            <div id="mapStatus" class="message">
+                Loading competition map...
+            </div>
+
+            <div id="mapDiv"></div>
+
+            <div id="mapLegend" class="map-legend"></div>
+        </section>
+
+        <!-- Recommendations -->
+        <section class="card">
+            <h2>Top Business Recommendations</h2>
+
+            <div id="recommendations">
+                <div class="message">
+                    Calculating recommendations...
+                </div>
+            </div>
+        </section>
+
+        <!-- Threats -->
+        <section class="card">
+            <h2>Potential Threats</h2>
+
+            <div id="threats">
+                <div class="message">
+                    Checking potential threats...
+                </div>
+            </div>
+        </section>
+
+        <!-- AI Business Insight -->
+        <section class="card">
+            <h2>AI Business Insight</h2>
+
+            <div id="aiInsight" class="message">
+                Loading AI insight...
+            </div>
+        </section>
+
+        <!-- Final Recommendation -->
+        <section class="card">
+            <h2>Final Recommendation</h2>
+
+            <div id="finalRecommendation">
+                <div class="message">
+                    Preparing final recommendation...
+                </div>
+            </div>
+
+            <div class="buttons">
+                <button class="back-button" onclick="window.location.href='index.html'">
+                    ← Back
+                </button>
+
+                <button class="print-button" onclick="window.print()">
+                    Print Results
+                </button>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="/vendor/leaflet/leaflet.js"></script>
+
+    <!-- Competition Finder -->
+    <script src="/competition-finder/competition_finder.js"></script>
+
+    <!-- Recommendation Engine -->
+    <script src="/chandru-business-recommendation-engine/recommendation-engine.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+
+            const params = new URLSearchParams(window.location.search);
+
+            /*
+             * IMPORTANT:
+             * Do not use:
+             * const location = ...
+             *
+             * "location" already exists as a browser global.
+             */
+            const locationType = params.get("location") || "";
+            const country = params.get("country") || "";
+            const state = params.get("state") || "";
+            const district = params.get("district") || "";
+            const village = params.get("village") || "";
+            const capital = Number(params.get("capital") || 0);
+            const experience = params.get("experience") || "";
+
+            /*
+             * The current index.html sends skills as:
+             *
+             * skills=tailoring,technology,marketing,management
+             *
+             * Therefore we split the value here.
+             */
+            const skills =
+                params.get("skills")
+                    ?.split(",")
+                    .map(skill => skill.trim())
+                    .filter(Boolean) || [];
+
+            /*
+             * Competition data is stored by index.html
+             * before navigating to this page.
+             */
+            let competitionData = null;
+
+            try {
+                const storedCompetition =
+                    sessionStorage.getItem("competitionData");
+
+                if (storedCompetition) {
+                    competitionData = JSON.parse(storedCompetition);
+                }
+            } catch (error) {
+                console.error(
+                    "Could not read competition data:",
+                    error
+                );
+            }
+
+            /*
+             * Competitor count can legitimately be 0.
+             * Therefore we must NOT use:
+             *
+             * if (!competitorCount)
+             *
+             * because 0 would be treated as false.
+             */
+            const rawCompetitorCount =
+                Number(competitionData?.competitorCount);
+
+            const competitorCount =
+                Number.isFinite(rawCompetitorCount) &&
+                    rawCompetitorCount >= 0
+                    ? rawCompetitorCount
+                    : 0;
+
+            /*
+             * Show profile
+             */
+            renderProfile();
+
+            /*
+             * Show map
+             */
+            renderMap();
+
+            /*
+             * Run recommendation engine
+             */
+            renderRecommendations();
+
+
+            function renderProfile() {
+
+                const profileSection =
+                    document.getElementById("profileSection");
+
+                profileSection.innerHTML = `
+                <div class="profile-item">
+                    <strong>Location Type</strong>
+                    <span>${escapeHtml(locationType || "Not provided")}</span>
+                </div>
+
+                <div class="profile-item">
+                    <strong>District, State</strong>
+                    <span>${escapeHtml([district, state, country].filter(Boolean).join(", ") || "Not provided")}</span>
+                </div>
+
+                <div class="profile-item">
+                    <strong>Village / Area</strong>
+                    <span>${escapeHtml(village || "Not provided")}</span>
+                </div>
+
+                <div class="profile-item">
+                    <strong>Capital</strong>
+                    <span>
+                        ₹${capital.toLocaleString("en-IN")}
+                    </span>
+                </div>
+
+                <div class="profile-item">
+                    <strong>Skills</strong>
+                    <span>
+                        ${skills.length > 0
+                        ? skills.map(escapeHtml).join(", ")
+                        : "None selected"
+                    }
+                    </span>
+                </div>
+
+                <div class="profile-item">
+                    <strong>Experience</strong>
+                    <span>${escapeHtml(experience || "Not provided")}</span>
+                </div>
+
+                <div class="profile-item">
+                    <strong>Nearby Competitors</strong>
+                    <span>${competitorCount.toLocaleString("en-IN")}</span>
+                </div>
+            `;
+            }
+
+
+            function renderMap() {
+
+                const mapStatus =
+                    document.getElementById("mapStatus");
+
+                if (
+                    !competitionData ||
+                    !Number.isFinite(Number(competitionData.latitude)) ||
+                    !Number.isFinite(Number(competitionData.longitude))
+                ) {
+                    mapStatus.innerHTML =
+                        "Map data is not available.";
+
+                    return;
+                }
+
+                if (typeof drawCompetitorMap !== "function") {
+
+                    mapStatus.innerHTML =
+                        "Map engine could not be loaded.";
+
+                    console.error(
+                        "drawCompetitorMap function is unavailable."
+                    );
+
+                    return;
+                }
+
+                try {
+
+                    /*
+                     * IMPORTANT:
+                     *
+                     * drawCompetitorMap() expects:
+                     *
+                     * drawCompetitorMap(
+                     *     mapDivId,
+                     *     latitude,
+                     *     longitude,
+                     *     shops
+                     * )
+                     *
+                     * Do NOT pass competitionData as the first argument.
+                     */
+                    drawCompetitorMap(
+                        "mapDiv",
+                        Number(competitionData.latitude),
+                        Number(competitionData.longitude),
+                        competitionData.shops || []
+                    );
+
+                    mapStatus.style.display = "none";
+
+                    const osmCount = Number(competitionData.osmCompetitorCount) || 0;
+                    const aiCount = Number(competitionData.aiCompetitorCount) || 0;
+                    const legend = document.getElementById("mapLegend");
+
+                    legend.innerHTML = `
+                        <span><span class="dot osm"></span>OpenStreetMap (${osmCount})</span>
+                        ${competitionData.aiEnabled
+                            ? `<span><span class="dot ai"></span>AI suggested, unverified (${aiCount})</span>`
+                            : `<span>AI-assisted search is off &mdash; add a Gemini key in config.js to enable it.</span>`
+                        }
+                        ${competitionData.aiEnabled && aiCount === 0
+                            ? `<span style="color:#94a3b8;">
+                                   ${competitionData.aiError
+                                ? escapeHtml(competitionData.aiError)
+                                : "Gemini found no additional businesses for these skills near this location, or everything it named was already in the OpenStreetMap list above."
+                            }
+                               </span>`
+                            : ""
+                        }
+                    `;
+
+                } catch (error) {
+
+                    console.error(
+                        "Map rendering failed:",
+                        error
+                    );
+
+                    mapStatus.innerHTML =
+                        "Map could not be loaded.";
+                }
+            }
+
+
+            function renderRecommendations() {
+
+                const recommendationsContainer =
+                    document.getElementById("recommendations");
+
+                const threatsContainer =
+                    document.getElementById("threats");
+
+                const finalContainer =
+                    document.getElementById("finalRecommendation");
+
+                if (
+                    typeof getRecommendations !== "function"
+                ) {
+
+                    recommendationsContainer.innerHTML = `
+                    <div class="error">
+                        Recommendation engine could not be loaded.
+                    </div>
+                `;
+
+                    threatsContainer.innerHTML = `
+                    <div class="error">
+                        Recommendation engine could not be loaded.
+                    </div>
+                `;
+
+                    finalContainer.innerHTML = `
+                    <div class="error">
+                        Recommendation engine could not be loaded.
+                    </div>
+                `;
+
+                    console.error(
+                        "getRecommendations function is unavailable."
+                    );
+
+                    return;
+                }
+
+                try {
+
+                    const result =
+                        getRecommendations({
+                            location: locationType,
+                            capital: capital,
+                            skills: skills,
+                            experience: experience,
+                            competitorCount: competitorCount
+                        });
+
+                    console.log(
+                        "Recommendation result:",
+                        result
+                    );
+
+                    renderRecommendationResult(result);
+
+                    renderAiInsight(
+                        Array.isArray(result) ? result : []
+                    );
+
+                } catch (error) {
+
+                    console.error(
+                        "Recommendation engine error:",
+                        error
+                    );
+
+                    recommendationsContainer.innerHTML = `
+                    <div class="error">
+                        Could not generate business recommendations.
+                        <br><br>
+                        ${escapeHtml(error.message)}
+                    </div>
+                `;
+                }
+            }
+
+
+            /*
+             * Asks the server's Gemini-backed /api/ai-insight
+             * endpoint for a short, personalized paragraph on top
+             * of the scored recommendation list. Optional and
+             * best-effort: if no Gemini key is configured on the
+             * server, this section just explains that and the
+             * rest of the page is unaffected.
+             */
+            async function renderAiInsight(recommendations) {
+
+                const aiInsightContainer =
+                    document.getElementById("aiInsight");
+
+                try {
+
+                    const response = await fetch("/api/ai-insight", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            profile: {
+                                locationType,
+                                village,
+                                capital,
+                                skills,
+                                experience,
+                                competitorCount
+                            },
+                            recommendations
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (!data.enabled) {
+                        aiInsightContainer.innerHTML = `
+                        <div class="message">
+                            AI insight is off &mdash; add a Gemini API key in
+                            <code>config.js</code> at the project root to enable it.
+                        </div>
+                    `;
+                        return;
+                    }
+
+                    if (!data.insight) {
+                        aiInsightContainer.innerHTML = `
+                        <div class="message">
+                            ${escapeHtml(data.error || "No AI insight was returned.")}
+                        </div>
+                    `;
+                        return;
+                    }
+
+                    aiInsightContainer.innerHTML = `
+                    <div class="ai-insight">
+                        ${escapeHtml(data.insight)}
+                    </div>
+                `;
+
+                } catch (error) {
+
+                    console.error("AI insight request failed:", error);
+
+                    aiInsightContainer.innerHTML = `
+                    <div class="message">
+                        AI insight could not be loaded.
+                    </div>
+                `;
+                }
+            }
+
+
+            function renderRecommendationResult(result) {
+
+                const recommendationsContainer =
+                    document.getElementById("recommendations");
+
+                const threatsContainer =
+                    document.getElementById("threats");
+
+                const finalContainer =
+                    document.getElementById("finalRecommendation");
+
+                /*
+                 * getRecommendations() returns a plain array of
+                 * scored businesses, sorted highest first:
+                 * [{ name, score, reasons, threats }, ...]
+                 *
+                 * Some engine versions might instead wrap that
+                 * array inside an object. Support both shapes.
+                 */
+                const recommendations =
+                    Array.isArray(result)
+                        ? result
+                        : (
+                            result?.recommendations ||
+                            result?.topRecommendations ||
+                            result?.top ||
+                            []
+                        );
+
+                /*
+                 * Render top recommendations
+                 */
+                if (
+                    Array.isArray(recommendations) &&
+                    recommendations.length > 0
+                ) {
+
+                    recommendationsContainer.innerHTML =
+                        recommendations
+                            .slice(0, 5)
+                            .map((item, index) => {
+
+                                const name =
+                                    item.category ||
+                                    item.name ||
+                                    item.business ||
+                                    `Business ${index + 1}`;
+
+                                const score =
+                                    Number(item.score);
+
+                                const safeScore =
+                                    Number.isFinite(score)
+                                        ? score
+                                        : 0;
+
+                                const reasons =
+                                    item.reasons ||
+                                    item.reason ||
+                                    [];
+
+                                let reasonHtml = "";
+
+                                if (Array.isArray(reasons)) {
+
+                                    reasonHtml =
+                                        reasons
+                                            .map(reason =>
+                                                `<li>${escapeHtml(reason)}</li>`
+                                            )
+                                            .join("");
+
+                                } else if (reasons) {
+
+                                    reasonHtml =
+                                        `<li>${escapeHtml(reasons)}</li>`;
+                                }
+
+                                return `
+                                <div class="recommendation">
+
+                                    <h3>
+                                        #${index + 1}
+                                        ${escapeHtml(name)}
+                                    </h3>
+
+                                    <div class="score">
+                                        Score: ${safeScore}/100
+                                    </div>
+
+                                    ${reasonHtml
+                                        ? `
+                                                <p>
+                                                    <strong>Why this business?</strong>
+                                                </p>
+                                                <ul>
+                                                    ${reasonHtml}
+                                                </ul>
+                                            `
+                                        : `
+                                                <p>
+                                                    Recommended based on your
+                                                    profile and local competition.
+                                                </p>
+                                            `
+                                    }
+
+                                </div>
+                            `;
+
+                            })
+                            .join("");
+
+                } else {
+
+                    recommendationsContainer.innerHTML = `
+                    <div class="message">
+                        No recommendations were generated.
+                    </div>
+                `;
+                }
+
+
+                /*
+                 * Render threats
+                 *
+                 * getRecommendations() attaches threats to each
+                 * individual business rather than to a top-level
+                 * "threats" property. Combine the unique threats
+                 * from the top-ranked businesses into one overview
+                 * list for this section.
+                 */
+                const threats =
+                    Array.isArray(result)
+                        ? Array.from(
+                            new Set(
+                                recommendations
+                                    .slice(0, 5)
+                                    .flatMap(item => item.threats || [])
+                            )
+                        )
+                        : (result?.threats || []);
+
+                if (
+                    Array.isArray(threats) &&
+                    threats.length > 0
+                ) {
+
+                    threatsContainer.innerHTML =
+                        threats
+                            .map(threat => `
+                            <div class="threat">
+                                ⚠️ ${escapeHtml(threat)}
+                            </div>
+                        `)
+                            .join("");
+
+                } else {
+
+                    threatsContainer.innerHTML = `
+                    <div class="message">
+                        No major threats detected.
+                    </div>
+                `;
+                }
+
+
+                /*
+                 * Final recommendation
+                 */
+                const finalRecommendation =
+                    Array.isArray(result)
+                        ? (recommendations[0] || null)
+                        : (
+                            result?.finalRecommendation ||
+                            result?.final ||
+                            result?.recommendation ||
+                            null
+                        );
+
+                if (finalRecommendation) {
+
+                    if (typeof finalRecommendation === "string") {
+
+                        finalContainer.innerHTML = `
+                        <div class="final-recommendation">
+                            <h3>Recommended Business</h3>
+                            <p>
+                                ${escapeHtml(finalRecommendation)}
+                            </p>
+                        </div>
+                    `;
+
+                    } else {
+
+                        const name =
+                            finalRecommendation.category ||
+                            finalRecommendation.name ||
+                            finalRecommendation.business ||
+                            "Recommended Business";
+
+                        const score =
+                            Number(finalRecommendation.score);
+
+                        finalContainer.innerHTML = `
+                        <div class="final-recommendation">
+
+                            <h3>
+                                ${escapeHtml(name)}
+                            </h3>
+
+                            ${Number.isFinite(score)
+                                ? `
+                                        <p>
+                                            <strong>
+                                                Score:
+                                            </strong>
+                                            ${score}/100
+                                        </p>
+                                    `
+                                : ""
+                            }
+
+                            <p>
+                                This business is the strongest
+                                recommendation based on your
+                                available profile and competition data.
+                            </p>
+
+                        </div>
+                    `;
+                    }
+
+                } else if (Array.isArray(recommendations) && recommendations.length > 0) {
+
+                    const best =
+                        recommendations[0];
+
+                    const name =
+                        best.category ||
+                        best.name ||
+                        best.business ||
+                        "Top Recommendation";
+
+                    finalContainer.innerHTML = `
+                    <div class="final-recommendation">
+
+                        <h3>
+                            ${escapeHtml(name)}
+                        </h3>
+
+                        <p>
+                            This is your highest-ranked business
+                            recommendation.
+                        </p>
+
+                    </div>
+                `;
+
+                } else {
+
+                    finalContainer.innerHTML = `
+                    <div class="message">
+                        No final recommendation available.
+                    </div>
+                `;
+                }
+            }
+
+
+            function escapeHtml(value) {
+
+                return String(value ?? "")
+                    .replaceAll("&", "&amp;")
+                    .replaceAll("<", "&lt;")
+                    .replaceAll(">", "&gt;")
+                    .replaceAll('"', "&quot;")
+                    .replaceAll("'", "&#039;");
+            }
+
+        });
+    </script>
+
+</body>
+
+</html>
