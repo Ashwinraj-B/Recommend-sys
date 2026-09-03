@@ -1,0 +1,10 @@
+{
+  "name": "business-recommendation-integrated",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Integrated business recommendation engine with OpenStreetMap location and competition data",
+  "scripts": {
+    "start": "node competition-finder/server.js",
+    "cli": "node chandru-business-recommendation-engine/cli.js"
+  }
+}

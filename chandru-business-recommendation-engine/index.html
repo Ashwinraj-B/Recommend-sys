@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>
+        Business Recommendation Engine
+    </title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="/vendor/leaflet/leaflet.css">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
+            background:
+                linear-gradient(135deg,
+                    #eef7ff,
+                    #ffffff);
+
+            color: #222;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 900px;
+
+            margin: 40px auto;
+        }
+
+        .card {
+            background: white;
+
+            padding: 30px;
+
+            border-radius: 18px;
+
+            box-shadow:
+                0 10px 35px rgba(0, 0, 0, 0.12);
+        }
+
+        h1 {
+            text-align: center;
+
+            margin-top: 0;
+
+            color: #17365d;
+        }
+
+        .subtitle {
+            text-align: center;
+
+            color: #666;
+
+            margin-bottom: 30px;
+        }
+
+        .section {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+
+            font-weight: bold;
+
+            margin-bottom: 8px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        select {
+
+            width: 100%;
+
+            padding: 12px;
+
+            border: 1px solid #ccc;
+
+            border-radius: 8px;
+
+            font-size: 16px;
+        }
+
+        .radio-group {
+            display: flex;
+
+            gap: 25px;
+        }
+
+        .radio-group label {
+            font-weight: normal;
+
+            display: flex;
+
+            align-items: center;
+
+            gap: 6px;
+        }
+
+        .skill-input-row {
+            display: flex;
+
+            gap: 10px;
+        }
+
+        .skill-input-row input[type="text"] {
+            flex: 1;
+
+            padding: 12px;
+
+            border: 1px solid #cbd5e1;
+
+            border-radius: 8px;
+
+            font-size: 15px;
+        }
+
+        .skill-input-row button {
+            width: auto;
+
+            padding: 12px 18px;
+
+            background: #17365d;
+
+            color: white;
+
+            border-radius: 8px;
+
+            font-size: 15px;
+        }
+
+        .skill-hint {
+            margin: 8px 0 0;
+
+            font-size: 13px;
+
+            color: #64748b;
+        }
+
+        .skill-tags {
+            display: flex;
+
+            flex-wrap: wrap;
+
+            gap: 8px;
+
+            margin-top: 12px;
+        }
+
+        .skill-chip {
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+            padding: 8px 12px;
+
+            background: #eef7ff;
+
+            border: 1px solid #cce5ff;
+
+            border-radius: 20px;
+
+            font-size: 14px;
+
+            color: #17365d;
+        }
+
+        .skill-chip button {
+            width: auto;
+
+            padding: 0;
+
+            border: none;
+
+            background: none;
+
+            color: #17365d;
+
+            font-size: 16px;
+
+            line-height: 1;
+
+            cursor: pointer;
+
+            font-weight: bold;
+        }
+
+        .competition-info {
+            padding: 15px;
+
+            border-radius: 10px;
+
+            background: #eef7ff;
+
+            border: 1px solid #cce5ff;
+
+            color: #24527a;
+        }
+
+        button {
+            width: 100%;
+
+            padding: 15px;
+
+            border: none;
+
+            border-radius: 10px;
+
+            background: #17365d;
+
+            color: white;
+
+            font-size: 18px;
+
+            font-weight: bold;
+
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0d2745;
+        }
+
+        button:disabled {
+            background: #888;
+
+            cursor: not-allowed;
+        }
+
+        #mapDiv {
+            height: 350px;
+
+            margin-top: 20px;
+
+            border-radius: 12px;
+
+            display: none;
+        }
+
+        .error {
+            display: none;
+
+            margin-top: 15px;
+
+            padding: 12px;
+
+            background: #ffecec;
+
+            color: #a00000;
+
+            border-radius: 8px;
+        }
+
+        .loading {
+            display: none;
+
+            margin-top: 15px;
+
+            text-align: center;
+
+            color: #17365d;
+
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+
+            .container {
+                width: 95%;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .skill-input-row {
+                flex-direction: column;
+            }
+
+        }
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <div class="card">
+
+            <h1>
+                Business Recommendation Engine
+            </h1>
+
+            <p class="subtitle">
+                Find the best business based on your
+                location, capital, skills, experience
+                and nearby competition.
+            </p>
+
+            <form id="businessForm">
+
+                <!-- LOCATION TYPE -->
+
+                <div class="section">
+
+                    <label>
+                        Location Type
+                    </label>
+
+                    <div class="radio-group">
+
+                        <label>
+                            <input type="radio" name="location" value="rural" required>
+
+                            Rural
+                        </label>
+
+                        <label>
+                            <input type="radio" name="location" value="urban">
+
+                            Urban
+                        </label>
+
+                    </div>
+
+                </div>
+
+                <!-- COUNTRY / STATE / DISTRICT -->
+
+                <div class="section">
+
+                    <label for="country">
+                        Country
+                    </label>
+
+                    <select id="country" name="country" required>
+                        <option value="">Select country</option>
+                    </select>
+
+                </div>
+
+                <div class="section" id="stateSection">
+
+                    <label for="state">
+                        State
+                    </label>
+
+                    <select id="state" name="state" required>
+                        <option value="">Select country first</option>
+                    </select>
+
+                </div>
+
+                <div class="section" id="districtSection">
+
+                    <label for="district">
+                        District
+                    </label>
+
+                    <select id="district" name="district" required>
+                        <option value="">Select state first</option>
+                    </select>
+
+                </div>
+
+                <!-- VILLAGE / AREA -->
+
+                <div class="section">
+
+                    <label for="village">
+                        Village / Area Name
+                    </label>
+
+                    <input type="text" id="village" name="village" placeholder="Example: Tambaram" required>
+
+                </div>
+
+                <!-- CAPITAL -->
+
+                <div class="section">
+
+                    <label for="capital">
+                        Available Capital (₹)
+                    </label>
+
+                    <input type="number" id="capital" name="capital" min="0" placeholder="Example: 100000" required
+                        inputmode="numeric">
+
+                </div>
+
+                <!-- SKILLS -->
+
+                <div class="section">
+
+                    <label for="skillInput">
+                        Your Skills
+                    </label>
+
+                    <div class="skill-input-row">
+                        <input type="text" id="skillInput" list="skillSuggestions"
+                            placeholder="Type a skill and press Enter or Add (e.g. cooking, welding, photography)"
+                            autocomplete="off">
+                        <button type="button" id="addSkillButton">Add</button>
+                    </div>
+
+                    <datalist id="skillSuggestions">
+                        <!-- Populated dynamically from skills-config.js, just as suggestions -->
+                    </datalist>
+
+                    <p class="skill-hint">
+                        These are suggestions, not a fixed list &mdash; type any skill you have,
+                        even if it's not shown.
+                    </p>
+
+                    <div class="skill-tags" id="skillTags">
+                        <!-- Added skills render here as removable chips -->
+                    </div>
+
+                </div>
+
+                <!-- EXPERIENCE -->
+
+                <div class="section">
+
+                    <label for="experience">
+                        Experience Level
+                    </label>
+
+                    <select id="experience" name="experience" required>
+
+                        <option value="">
+                            Select experience
+                        </option>
+
+                        <option value="beginner">
+                            Beginner
+                        </option>
+
+                        <option value="intermediate">
+                            Intermediate
+                        </option>
+
+                        <option value="experienced">
+                            Experienced
+                        </option>
+
+                    </select>
+
+                </div>
+
+                <!-- COMPETITION -->
+
+                <div class="section">
+
+                    <div class="competition-info">
+
+                        <strong>
+                            Automatic Competition Analysis
+                        </strong>
+
+                        <br><br>
+
+                        After you press the button,
+                        the system will automatically:
+
+                        <ul>
+                            <li>
+                                Find your location
+                            </li>
+
+                            <li>
+                                Search nearby shops
+                            </li>
+
+                            <li>
+                                Count competitors within 5 km
+                            </li>
+
+                            <li>
+                                Display them on the map
+                            </li>
+                        </ul>
+
+                    </div>
+
+                </div>
+
+                <!-- BUTTON -->
+
+                <button type="submit" id="submitButton">
+                    Find My Best Business
+                </button>
+
+                <div class="loading" id="loading">
+                    Finding location and nearby competitors...
+                </div>
+
+                <div class="error" id="error"></div>
+
+            </form>
+
+            <div id="mapDiv"></div>
+
+        </div>
+
+    </div>
+
+    <!-- Leaflet JS -->
+
+    <script src="/vendor/leaflet/leaflet.js"></script>
+
+    <!-- India country / state / district data -->
+
+    <script src="/chandru-business-recommendation-engine/india-locations.js"></script>
+    <script src="/chandru-business-recommendation-engine/skills-config.js"></script>
+
+    <!-- Competition Engine -->
+
+    <script src="/competition-finder/competition_finder.js"></script>
+
+    <script>
+
+        // ------------------------------------------------
+        // LOCATION DROPDOWNS (Country / State / District)
+        // ------------------------------------------------
+
+        const countrySelect =
+            document.getElementById("country");
+
+        const stateSelect =
+            document.getElementById("state");
+
+        const districtSelect =
+            document.getElementById("district");
+
+        const stateSection =
+            document.getElementById("stateSection");
+
+        const districtSection =
+            document.getElementById("districtSection");
+
+        function populateSelect(selectEl, options, placeholder) {
+            selectEl.innerHTML = "";
+
+            const placeholderOption =
+                document.createElement("option");
+
+            placeholderOption.value = "";
+            placeholderOption.textContent = placeholder;
+            selectEl.appendChild(placeholderOption);
+
+            options.forEach(optionValue => {
+                const option =
+                    document.createElement("option");
+
+                option.value = optionValue;
+                option.textContent = optionValue;
+                selectEl.appendChild(option);
+            });
+        }
+
+        function switchToTextInput(selectEl, name, placeholder) {
+            const textInput =
+                document.createElement("input");
+
+            textInput.type = "text";
+            textInput.id = selectEl.id;
+            textInput.name = name;
+            textInput.placeholder = placeholder;
+            textInput.required = true;
+
+            selectEl.replaceWith(textInput);
+            return textInput;
+        }
+
+        // Skills the user has added. Unlike the old checkbox list,
+        // this is not limited to a fixed set -- SKILLS (from
+        // skills-config.js) is only used to populate suggestions;
+        // the user can type and add any skill of their own.
+        let selectedSkills = [];
+
+        const skillInput = document.getElementById("skillInput");
+        const addSkillButton = document.getElementById("addSkillButton");
+        const skillTags = document.getElementById("skillTags");
+        const skillSuggestions = document.getElementById("skillSuggestions");
+
+        // Populates the <datalist> with suggestions from
+        // skills-config.js. These are just suggestions shown by the
+        // browser as the user types -- they don't restrict input.
+        function populateSkillSuggestions(datalistEl, skills) {
+            datalistEl.innerHTML = "";
+
+            skills.forEach(skill => {
+                const option = document.createElement("option");
+                option.value = skill.label;
+                datalistEl.appendChild(option);
+            });
+        }
+
+        function renderSkillChips() {
+            skillTags.innerHTML = "";
+
+            selectedSkills.forEach((skill, index) => {
+                const chip = document.createElement("span");
+                chip.className = "skill-chip";
+
+                const text = document.createElement("span");
+                text.textContent = skill;
+
+                const removeButton = document.createElement("button");
+                removeButton.type = "button";
+                removeButton.setAttribute("aria-label", `Remove ${skill}`);
+                removeButton.textContent = "\u00d7";
+                removeButton.addEventListener("click", () => {
+                    selectedSkills.splice(index, 1);
+                    renderSkillChips();
+                });
+
+                chip.appendChild(text);
+                chip.appendChild(removeButton);
+                skillTags.appendChild(chip);
+            });
+        }
+
+        function addSkillFromInput() {
+            const value = skillInput.value.trim();
+            if (!value) return;
+
+            const alreadyAdded = selectedSkills.some(
+                skill => skill.toLowerCase() === value.toLowerCase()
+            );
+
+            if (!alreadyAdded) {
+                selectedSkills.push(value);
+                renderSkillChips();
+            }
+
+            skillInput.value = "";
+            skillInput.focus();
+        }
+
+        addSkillButton.addEventListener("click", addSkillFromInput);
+
+        skillInput.addEventListener("keydown", function (event) {
+            // Enter adds the skill instead of submitting the form.
+            if (event.key === "Enter") {
+                event.preventDefault();
+                addSkillFromInput();
+            }
+        });
+
+        populateSkillSuggestions(
+            skillSuggestions,
+            (typeof SKILLS !== "undefined" ? SKILLS : [])
+        );
+
+        // Populate the country dropdown from india-locations.js
+        populateSelect(
+            countrySelect,
+            (typeof COUNTRY_LIST !== "undefined" ? COUNTRY_LIST : ["India"]),
+            "Select country"
+        );
+
+        countrySelect.addEventListener("change", function () {
+            const country = countrySelect.value;
+
+            if (country === "India") {
+
+                // Restore State/District as dropdowns if they were
+                // previously swapped for free-text inputs.
+                if (document.getElementById("state").tagName !== "SELECT") {
+                    const freshState = document.createElement("select");
+                    freshState.id = "state";
+                    freshState.name = "state";
+                    freshState.required = true;
+                    document.getElementById("state").replaceWith(freshState);
+                }
+
+                if (document.getElementById("district").tagName !== "SELECT") {
+                    const freshDistrict = document.createElement("select");
+                    freshDistrict.id = "district";
+                    freshDistrict.name = "district";
+                    freshDistrict.required = true;
+                    document.getElementById("district").replaceWith(freshDistrict);
+                }
+
+                const stateEl = document.getElementById("state");
+                const districtEl = document.getElementById("district");
+
+                const states =
+                    typeof INDIA_STATES_DISTRICTS !== "undefined"
+                        ? Object.keys(INDIA_STATES_DISTRICTS).sort()
+                        : [];
+
+                populateSelect(stateEl, states, "Select state");
+                populateSelect(districtEl, [], "Select state first");
+
+                stateEl.addEventListener("change", function () {
+                    const districtOptions =
+                        (typeof INDIA_STATES_DISTRICTS !== "undefined" &&
+                            INDIA_STATES_DISTRICTS[stateEl.value]) || [];
+
+                    populateSelect(
+                        document.getElementById("district"),
+                        districtOptions,
+                        "Select district"
+                    );
+                });
+
+            } else if (country) {
+
+                // Non-India: fall back to free-text State / District
+                // fields since we don't hold district data for every
+                // country.
+                switchToTextInput(
+                    document.getElementById("state"),
+                    "state",
+                    "Enter your state / region"
+                );
+
+                switchToTextInput(
+                    document.getElementById("district"),
+                    "district",
+                    "Enter your district"
+                );
+            }
+        });
+
+        // Default to India since the app is built around ₹ currency.
+        countrySelect.value = "India";
+        countrySelect.dispatchEvent(new Event("change"));
+
+        // ------------------------------------------------
+        // CAPITAL FIELD: remove mouse-wheel increment/decrement
+        // ------------------------------------------------
+
+        const capitalInput =
+            document.getElementById("capital");
+
+        capitalInput.addEventListener(
+            "wheel",
+            function (event) {
+                // Prevent the browser from changing the number
+                // value when the user scrolls while the field
+                // is focused.
+                event.preventDefault();
+            },
+            { passive: false }
+        );
+
+        const form =
+            document.getElementById(
+                "businessForm"
+            );
+
+        const submitButton =
+            document.getElementById(
+                "submitButton"
+            );
+
+        const loading =
+            document.getElementById(
+                "loading"
+            );
+
+        const errorBox =
+            document.getElementById(
+                "error"
+            );
+
+        form.addEventListener(
+            "submit",
+            async function (event) {
+
+                event.preventDefault();
+
+                errorBox.style.display =
+                    "none";
+
+                const location =
+                    document.querySelector(
+                        'input[name="location"]:checked'
+                    )?.value;
+
+                const country =
+                    document.getElementById(
+                        "country"
+                    ).value.trim();
+
+                const state =
+                    document.getElementById(
+                        "state"
+                    ).value.trim();
+
+                const district =
+                    document.getElementById(
+                        "district"
+                    ).value.trim();
+
+                const village =
+                    document.getElementById(
+                        "village"
+                    ).value.trim();
+
+                const capital =
+                    Number(
+                        document.getElementById(
+                            "capital"
+                        ).value
+                    );
+
+                const experience =
+                    document.getElementById(
+                        "experience"
+                    ).value;
+
+                const skills =
+                    selectedSkills.slice();
+
+                // ------------------------------------------------
+                // VALIDATION
+                // ------------------------------------------------
+
+                if (!location) {
+
+                    showError(
+                        "Please select Rural or Urban."
+                    );
+
+                    return;
+                }
+
+                if (!country) {
+
+                    showError(
+                        "Please select your country."
+                    );
+
+                    return;
+                }
+
+                if (!state) {
+
+                    showError(
+                        "Please select your state."
+                    );
+
+                    return;
+                }
+
+                if (!district) {
+
+                    showError(
+                        "Please select your district."
+                    );
+
+                    return;
+                }
+
+                if (!village) {
+
+                    showError(
+                        "Please enter your village or area name."
+                    );
+
+                    return;
+                }
+
+                if (
+                    !Number.isFinite(
+                        capital
+                    ) ||
+                    capital < 0
+                ) {
+
+                    showError(
+                        "Please enter a valid capital amount."
+                    );
+
+                    return;
+                }
+
+                if (!experience) {
+
+                    showError(
+                        "Please select your experience level."
+                    );
+
+                    return;
+                }
+
+                if (skills.length === 0) {
+
+                    showError(
+                        "Please add at least one skill."
+                    );
+
+                    return;
+                }
+
+                // ------------------------------------------------
+                // LOADING
+                // ------------------------------------------------
+
+                submitButton.disabled =
+                    true;
+
+                loading.style.display =
+                    "block";
+
+                try {
+
+                    // ------------------------------------------------
+                    // RUN MAP + COMPETITION ENGINE
+                    // ------------------------------------------------
+
+                    const competitionData =
+                        await competitionFinder(
+                            village,
+                            {
+                                skills: skills,
+                                district: district,
+                                state: state,
+                                country: country
+                            }
+                        );
+
+                    // ------------------------------------------------
+                    // STORE DATA
+                    // ------------------------------------------------
+
+                    sessionStorage.setItem(
+                        "competitionData",
+                        JSON.stringify(
+                            {
+                                village:
+                                    competitionData.village,
+
+                                latitude:
+                                    competitionData.latitude,
+
+                                longitude:
+                                    competitionData.longitude,
+
+                                displayName:
+                                    competitionData.displayName,
+
+                                shops:
+                                    competitionData.shops,
+
+                                competitorCount:
+                                    competitionData.competitorCount,
+
+                                osmCompetitorCount:
+                                    competitionData.osmCompetitorCount,
+
+                                aiCompetitorCount:
+                                    competitionData.aiCompetitorCount,
+
+                                aiEnabled:
+                                    competitionData.aiEnabled,
+
+                                aiError:
+                                    competitionData.aiError,
+
+                                radiusMeters:
+                                    competitionData.radiusMeters
+                            }
+                        )
+                    );
+
+                    // ------------------------------------------------
+                    // BUILD RESULTS URL
+                    // ------------------------------------------------
+
+                    const params =
+                        new URLSearchParams();
+
+                    params.set(
+                        "location",
+                        location
+                    );
+
+                    params.set(
+                        "country",
+                        country
+                    );
+
+                    params.set(
+                        "state",
+                        state
+                    );
+
+                    params.set(
+                        "district",
+                        district
+                    );
+
+                    params.set(
+                        "village",
+                        village
+                    );
+
+                    params.set(
+                        "capital",
+                        String(capital)
+                    );
+
+                    params.set(
+                        "experience",
+                        experience
+                    );
+
+                    params.set(
+                        "skills",
+                        skills.join(",")
+                    );
+
+                    // ------------------------------------------------
+                    // GO TO RESULTS PAGE
+                    // ------------------------------------------------
+
+                    window.location.href =
+                        "/results.html?" +
+                        params.toString();
+
+                }
+
+                catch (error) {
+
+                    console.error(
+                        error
+                    );
+
+                    showError(
+                        error.message ||
+                        "Something went wrong while finding competition data."
+                    );
+
+                    submitButton.disabled =
+                        false;
+
+                    loading.style.display =
+                        "none";
+                }
+
+            }
+        );
+
+        function showError(message) {
+
+            errorBox.textContent =
+                message;
+
+            errorBox.style.display =
+                "block";
+        }
+
+    </script>
+
+</body>
+
+</html>
